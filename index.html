@@ -494,15 +494,20 @@ function genSpark(seed,price,chgPct){
   const arr=[];let v=price/(1+chgPct/100*0.85);
   for(let i=0;i<40;i++){v*=1+(rnd()-0.5)*0.014+chgPct/100/40*0.9;arr.push(v);}
   arr[39]=price;return arr;}
-function groupOf(exch){if(exch==='NSE')return 'NSE';if(exch==='BSE')return 'BSE';
-  if(exch==='NASDAQ'||exch==='NYSE'||exch==='AMEX')return 'US';return 'OTHER';}
+function groupOf(exch,sym){
+  sym=sym||'';
+  if(sym.endsWith('.NS'))return 'NSE';
+  if(sym.endsWith('.BO'))return 'BSE';
+  const e=(exch||'').toUpperCase();
+  if(['NMS','NGM','NCM','NYQ','ASE','PCX','BATS','NASDAQ','NYSE','AMEX'].includes(e))return 'US';
+  return 'OTHER';}
 function capOf(mcap){if(mcap<2e9)return 'small';if(mcap<1.5e10)return 'mid';return 'large';}
 function useData(payload){
   genAt=new Date(payload.generated_at||Date.now()).getTime();
   QUOTES=(payload.quotes||[]).map((r,i)=>{
     const price=+r.price||0,prev=+r.prev_close||price;
     const chg=price-prev,pct=prev?chg/prev*100:0;
-    const q={sym:r.sym,name:r.name||r.sym,exch:r.exch||'?',group:groupOf(r.exch||''),
+    const q={sym:r.sym,name:r.name||r.sym,exch:r.exch||'?',group:groupOf(r.exch||'',r.sym||''),
       currency:r.currency||'USD',price,prev,change:chg,changePct:pct,
       volume:+r.volume||0,mcap:+r.market_cap||0,avgVol:+r.avg_vol_30d||0,
       mentions:r.news_mentions_30d!=null?+r.news_mentions_30d:0,
